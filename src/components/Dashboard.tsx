@@ -1,9 +1,11 @@
 // AI-Assisted
 'use client';
 
+import { aethericDecoder } from '@/lib/client-decoder';
 import { Activity, Cpu, Database, Gauge, Play, Settings, Square, Zap } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import ConnectionStatus from './ConnectionStatus';
+import DecoderResults from './DecoderResults';
 import MessageTable from './MessageTable';
 
 interface TcpStats {
@@ -43,12 +45,32 @@ interface ClientStatus {
   events: ClientEvent[];
 }
 
+interface EthereumAddressData {
+  address: string;
+  messageId: number;
+  timestamp: string;
+}
+
+interface DecoderResults {
+  ethereumAddresses: EthereumAddressData[];
+  seedPhrases: string[];
+  bip39Words: Array<{
+    word: string;
+    timestamp: string;
+    messageId: number;
+    position: number;
+  }>;
+  technicalSummary: string;
+}
+
 export default function Dashboard() {
   const [status, setStatus] = useState<ClientStatus>({ isRunning: false, stats: null, events: [] });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [decoderResults, setDecoderResults] = useState<DecoderResults | null>(null);
+  const [isDecoding, setIsDecoding] = useState(false);
 
   useEffect(() => {
     fetchStatus();
@@ -60,13 +82,19 @@ export default function Dashboard() {
     }
   }, [autoRefresh, status.isRunning]);
 
-  // Auto-disable refresh when engine stops
+  // Auto-disable refresh when engine stops and trigger decoder if 600 messages reached
   useEffect(() => {
     if (autoRefresh && !status.isRunning && status.stats) {
       // Engine stopped, disable auto-refresh
       setAutoRefresh(false);
+
+      // Auto-trigger decoder if we reached 600 messages
+      if (status.stats.messagesReceived >= 600 && !decoderResults && !isDecoding) {
+        console.log('Auto-triggering decoder after collecting 600 messages');
+        runDecoder();
+      }
     }
-  }, [status.isRunning, autoRefresh, status.stats]);
+  }, [status.isRunning, autoRefresh, status.stats, decoderResults, isDecoding]);
 
   const fetchStatus = async () => {
     try {
@@ -109,6 +137,26 @@ export default function Dashboard() {
     }
   };
 
+  const runDecoder = async () => {
+    if (isDecoding) return;
+
+    setIsDecoding(true);
+    setError(null);
+
+    try {
+      console.log('Running Aetheric Decoder...');
+      const results = await aethericDecoder.decodeMessages();
+      setDecoderResults(results);
+      console.log('Decoder completed successfully:', results);
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Unknown decoder error';
+      setError(`Decoder failed: ${errorMsg}`);
+      console.error('Decoder error:', error);
+    } finally {
+      setIsDecoding(false);
+    }
+  };
+
   const clearMessages = async () => {
     if (!confirm('Are you sure you want to clear all messages from the database?')) {
       return;
@@ -121,6 +169,8 @@ export default function Dashboard() {
 
       if (response.ok) {
         await fetchStatus();
+        // Clear decoder results when messages are cleared
+        setDecoderResults(null);
         // Trigger MessageTable refresh by updating the trigger
         setRefreshTrigger(prev => prev + 1);
       } else {
@@ -281,6 +331,14 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
+
+        {/* Decoder Results */}
+        <DecoderResults
+          results={decoderResults}
+          isDecoding={isDecoding}
+          onDecode={runDecoder}
+          hasMessages={(status.stats?.messagesReceived || 0) > 0}
+        />
 
         {/* Recent Events */}
         {status.events.length > 0 && (

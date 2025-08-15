@@ -3,6 +3,7 @@
 
 import { Copy, Key, Search, Wallet } from 'lucide-react';
 import { useState } from 'react';
+import NFTChecker from './NFTChecker';
 
 interface BIP39Word {
   word: string;
@@ -35,7 +36,7 @@ export default function DecoderResults({ results, isDecoding, onDecode, hasMessa
   const [copiedItem, setCopiedItem] = useState<string | null>(null);
   const [addressPage, setAddressPage] = useState(0);
   const [wordsPage, setWordsPage] = useState(0);
-  
+
   const ADDRESSES_PER_PAGE = 10;
   const WORDS_PER_PAGE = 10;
 
@@ -81,7 +82,7 @@ export default function DecoderResults({ results, isDecoding, onDecode, hasMessa
         {!results && !isDecoding && (
           <div className="text-center text-purple-600 italic">
             <p className="text-lg mb-2">🔍 Ready to decrypt hidden crypto secrets</p>
-            <p className="text-sm">Click "Decode Messages" to analyze the collected data for Ethereum addresses and BIP39 seed phrases</p>
+            <p className="text-sm">Click ~Decode Messages~ to analyze the collected data for Ethereum addresses and BIP39 seed phrases</p>
           </div>
         )}
 
@@ -95,7 +96,7 @@ export default function DecoderResults({ results, isDecoding, onDecode, hasMessa
                   <Wallet className="w-5 h-5 mr-2" />
                   Discovered Ethereum Addresses ({results.ethereumAddresses.length})
                 </h4>
-                
+
                 {/* Pagination info */}
                 {results.ethereumAddresses.length > ADDRESSES_PER_PAGE && (
                   <div className="flex justify-between items-center mb-3 text-sm text-green-600">
@@ -128,37 +129,40 @@ export default function DecoderResults({ results, isDecoding, onDecode, hasMessa
                   {results.ethereumAddresses
                     .slice(addressPage * ADDRESSES_PER_PAGE, (addressPage + 1) * ADDRESSES_PER_PAGE)
                     .map((addressData, index) => (
-                    <div key={index} className="bg-green-50 p-3 rounded-lg">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2 text-sm text-green-600">
-                          <span>Message #{addressData.messageId}</span>
-                          <span>•</span>
-                          <span>{new Date(addressData.timestamp).toLocaleDateString('en-US', { 
-                            year: '2-digit',
-                            month: 'short', 
-                            day: '2-digit', 
-                            hour: '2-digit', 
-                            minute: '2-digit' 
-                          })}</span>
+                      <div key={index} className="bg-green-50 p-3 rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2 text-sm text-green-600">
+                            <span>Message #{addressData.messageId}</span>
+                            <span>•</span>
+                            <span>{new Date(addressData.timestamp).toLocaleDateString('en-US', {
+                              year: '2-digit',
+                              month: 'short',
+                              day: '2-digit',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}</span>
+                          </div>
+                          <button
+                            onClick={() => handleCopy(addressData.address, `address-${addressPage * ADDRESSES_PER_PAGE + index}`)}
+                            className="p-2 text-green-600 hover:text-green-800 hover:bg-green-100 rounded"
+                            title="Copy address"
+                          >
+                            {copiedItem === `address-${addressPage * ADDRESSES_PER_PAGE + index}` ? (
+                              <span className="text-xs text-green-800">✓</span>
+                            ) : (
+                              <Copy className="w-4 h-4" />
+                            )}
+                          </button>
                         </div>
-                        <button
-                          onClick={() => handleCopy(addressData.address, `address-${addressPage * ADDRESSES_PER_PAGE + index}`)}
-                          className="p-2 text-green-600 hover:text-green-800 hover:bg-green-100 rounded"
-                          title="Copy address"
-                        >
-                          {copiedItem === `address-${addressPage * ADDRESSES_PER_PAGE + index}` ? (
-                            <span className="text-xs text-green-800">✓</span>
-                          ) : (
-                            <Copy className="w-4 h-4" />
-                          )}
-                        </button>
+                        <code className="block font-mono text-sm bg-gray-100 px-2 py-1 rounded text-gray-600">
+                          {addressData.address}
+                        </code>
                       </div>
-                      <code className="block font-mono text-sm bg-gray-100 px-2 py-1 rounded text-gray-600">
-                        {addressData.address}
-                      </code>
-                    </div>
-                  ))}
+                    ))}
                 </div>
+
+                {/* NFT Checker Integration */}
+                <NFTChecker addresses={results.ethereumAddresses} />
               </div>
             )}
 
@@ -213,26 +217,26 @@ export default function DecoderResults({ results, isDecoding, onDecode, hasMessa
                   {results.bip39Words
                     .slice(wordsPage * WORDS_PER_PAGE, (wordsPage + 1) * WORDS_PER_PAGE)
                     .map((wordData, index) => (
-                    <div key={wordsPage * WORDS_PER_PAGE + index} className="bg-amber-50 p-3 rounded-lg">
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <code className="font-bold text-amber-800">{wordData.word}</code>
-                          <span className="text-sm text-amber-600 ml-2">
-                            (Message #{wordData.messageId}, Position: {wordData.position})
+                      <div key={wordsPage * WORDS_PER_PAGE + index} className="bg-amber-50 p-3 rounded-lg">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <code className="font-bold text-amber-800">{wordData.word}</code>
+                            <span className="text-sm text-amber-600 ml-2">
+                              (Message #{wordData.messageId}, Position: {wordData.position})
+                            </span>
+                          </div>
+                          <span className="text-xs text-amber-500">
+                            {new Date(wordData.timestamp).toLocaleDateString('en-US', {
+                              year: '2-digit',
+                              month: 'short',
+                              day: '2-digit',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
                           </span>
                         </div>
-                        <span className="text-xs text-amber-500">
-                          {new Date(wordData.timestamp).toLocaleDateString('en-US', { 
-                            year: '2-digit',
-                            month: 'short', 
-                            day: '2-digit', 
-                            hour: '2-digit', 
-                            minute: '2-digit' 
-                          })}
-                        </span>
                       </div>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               </div>
             )}

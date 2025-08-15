@@ -51,6 +51,7 @@ npm run lint   # Run ESLint
 - **Export Options:** JSON exports with timestamp sorting
 - **Auto-pagination:** 40 messages per page for easy browsing
 - **Crypto Decoder:** Extracts hidden cryptocurrency data from collected messages
+- **NFT Checker:** Batch-check discovered Ethereum addresses for NFT ownership
 
 ## Crypto Decoder Feature
 
@@ -92,3 +93,57 @@ After collecting messages, the Aetheric Engine can analyze them for hidden crypt
 - No pre-programmed addresses or word lists - everything is discovered dynamically
 - Different message sets may produce different results
 - Seed phrases with fewer than 12 words are incomplete and may not work in wallets
+
+## NFT Checker Feature
+
+After decoding Ethereum addresses, the Aetheric Engine can check them for NFT ownership using blockchain data.
+
+### How It Works
+- **Progressive Checking:** Processes addresses in batches of 50 to avoid API rate limits
+- **Live Results:** Shows NFT discoveries immediately after each batch completes
+- **Blockchain Integration:** Uses Etherscan API to detect ERC-721 (NFT) transactions
+- **Collection Details:** Displays NFT collection names and counts for each address
+
+### Usage Options
+
+**Check All Addresses:**
+- Click "Check All (X batches)" to process all discovered addresses automatically
+- Shows real-time progress: "Checking batch 3 of 30..."
+- Results appear after each batch of 50 addresses
+- Includes 1-second delays between batches to respect API limits
+
+**Manual Batch Checking:**
+- Use "Next 50" button to check addresses in smaller batches
+- Allows you to pause and continue checking at your own pace
+- Cumulative results across all batches
+
+**Reset and Export:**
+- "Reset" button clears all results to start fresh
+- "Export NFTs" downloads JSON file with all addresses containing NFTs
+- Includes NFT counts and collection names for each address
+
+### Understanding NFT Results
+
+**Address Information:**
+- Valid Ethereum addresses that contain NFTs
+- Number of NFT transactions detected
+- Up to 3 collection names per address
+- Direct links to OpenSea for detailed viewing
+
+**Progress Tracking:**
+- Batch progress: "Checked 150 of 1484 addresses"
+- NFT counter: "🎨 With NFTs: 23" (updates live)
+- Completion status: "More to check" or "Complete!"
+
+### Technical Details
+- **Rate Limited:** Maximum 5 requests per second to Etherscan
+- **Batch Size:** 50 addresses per batch (configurable)
+- **API Requirements:** No API keys needed - uses public endpoints
+- **Data Source:** Etherscan ERC-721 transaction history
+- **Export Format:** JSON with timestamps and collection metadata
+
+### Use Cases
+- Verify if discovered addresses contain valuable NFT collections
+- Identify wallets with significant NFT holdings
+- Export NFT-holding addresses for further analysis
+- Research blockchain activity patterns in decoded data
